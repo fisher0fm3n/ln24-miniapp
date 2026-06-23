@@ -1,0 +1,63 @@
+const API_KEY = process.env.LN24_API_KEY || "JGJFFCDGH6994DSEGJ58IKOTY89";
+const BASE_URL = "https://ln24.loveworldapis.com/api/v1";
+
+export const LN24_ENDPOINTS = {
+  live: `${BASE_URL}/live`,
+  featured: `${BASE_URL}/featured?page=1`,
+  category791: `${BASE_URL}/posts?page=1&category=791`,
+  post: (id: string) => `${BASE_URL}/posts/${id}`,
+  posts: (category: string, page = "1") =>
+    `${BASE_URL}/posts?page=${encodeURIComponent(page)}&category=${encodeURIComponent(category)}`,
+  search: (param: string, page = "1") =>
+    `${BASE_URL}/search?search_param=${encodeURIComponent(param)}&page=${encodeURIComponent(page)}`,
+  categories: `${BASE_URL}/categories`,
+  videos: `${BASE_URL}/videos`,
+};
+
+export async function ln24Fetch(url: string) {
+  const res = await fetch(url, {
+    headers: { "X-APP-KEY": API_KEY },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`LN24 API request failed: ${res.status}`);
+  }
+  return res.json();
+}
+
+export const decodeHtml = (s: string) =>
+  (s || "")
+    .replace(/&#8217;/g, "’")
+    .replace(/&#8220;/g, "“")
+    .replace(/&#8221;/g, "”")
+    .replace(/&#8230;/g, "…")
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&rsquo;/g, "’")
+    .replace(/&quot;/g, '"')
+    .replace(/&#038;/g, "&");
+
+export function htmlToParagraphs(html: string): string[] {
+  if (!html) return [];
+  let s = html
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n\n")
+    .replace(/<strong>(.*?)<\/strong>/gi, (_, g) => `**${g}**`)
+    .replace(/<b>(.*?)<\/b>/gi, (_, g) => `**${g}**`)
+    .replace(/<em>(.*?)<\/em>/gi, (_, g) => `_${g}_`)
+    .replace(/<i>(.*?)<\/i>/gi, (_, g) => `_${g}_`)
+    .replace(/<[^>]*>/g, "");
+  s = decodeHtml(s);
+  return s
+    .split(/\n{2,}/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+export const pickStream = (
+  arr: { name: string; url: string }[] | undefined,
+): string | null => {
+  if (!arr?.length) return null;
+  const hd = arr.find((x) => /HD/i.test(x.name));
+  return (hd || arr[0])?.url || null;
+};
