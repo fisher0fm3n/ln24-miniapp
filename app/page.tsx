@@ -6,12 +6,28 @@ import CategoryTabs from "@/components/CategoryTabs";
 import ArticleCard from "@/components/ArticleCard";
 import { PostsSkeleton } from "@/components/Skeletons";
 import { decodeHtml } from "@/lib/ln24";
+import { fetchJson, peek } from "@/lib/clientCache";
 import { getInterests } from "@/lib/storage";
 import type { Category, PostItem, RawListItem } from "@/lib/types";
+
+type ApiList = { data?: RawListItem[] };
+
+function mapPosts(json: ApiList): PostItem[] {
+  return (json?.data || []).map((x) => ({
+    post_id: x.post_id,
+    title: decodeHtml(String(x.title || "")),
+    image: String(x.image_link || x.image || ""),
+    image_link: String(x.image_link || x.image || ""),
+    link: String(x.link || ""),
+    date: String(x.date || ""),
+    excerpt: x.excerpt,
+  }));
+}
 
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
+  // Seed posts synchronously from cache so re-selecting a tab is instant.
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
@@ -20,8 +36,9 @@ export default function Home() {
     let alive = true;
     (async () => {
       try {
-        const res = await fetch("/api/ln24/categories");
-        const json = await res.json();
+        const json = await fetchJson<{ data?: Category[] }>(
+          "/api/ln24/categories",
+        );
         let cats: Category[] = json?.data || [];
         const interests = getInterests();
         if (interests.length) {
@@ -47,22 +64,23 @@ export default function Home() {
   useEffect(() => {
     if (activeId == null) return;
     let alive = true;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- show loading during fetch
+    const url = `/api/ln24/posts?category=${activeId}`;
+
+    /* eslint-disable react-hooks/set-state-in-effect -- paint cached data / show loading */
+    const cached = peek<ApiList>(url);
+    if (cached) {
+      // Instant paint from cache, no skeleton flash.
+      setPosts(mapPosts(cached));
+      setLoadingPosts(false);
+      return;
+    }
+
     setLoadingPosts(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
     (async () => {
       try {
-        const res = await fetch(`/api/ln24/posts?category=${activeId}`);
-        const json = await res.json();
-        const rows: PostItem[] = (json?.data || []).map((x: RawListItem) => ({
-          post_id: x.post_id,
-          title: decodeHtml(String(x.title || "")),
-          image: String(x.image_link || x.image || ""),
-          image_link: String(x.image_link || x.image || ""),
-          link: String(x.link || ""),
-          date: String(x.date || ""),
-          excerpt: x.excerpt,
-        }));
-        if (alive) setPosts(rows);
+        const json = await fetchJson<ApiList>(url);
+        if (alive) setPosts(mapPosts(json));
       } catch {
         // noop
       } finally {

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { LN24_ENDPOINTS, ln24Fetch } from "@/lib/ln24";
+import { LN24_ENDPOINTS, ln24Fetch, cacheHeaders } from "@/lib/ln24";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -11,8 +11,8 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const data = await ln24Fetch(LN24_ENDPOINTS.search(param, page));
-    return NextResponse.json(data);
+    const data = await ln24Fetch(LN24_ENDPOINTS.search(param, page), 60);
+    return NextResponse.json(data, { headers: cacheHeaders(60, 300) });
   } catch {
     return NextResponse.json(
       { status: false, message: "Failed to search" },

@@ -14,15 +14,25 @@ export const LN24_ENDPOINTS = {
   videos: `${BASE_URL}/videos`,
 };
 
-export async function ln24Fetch(url: string) {
+export async function ln24Fetch(url: string, revalidate = 300) {
   const res = await fetch(url, {
     headers: { "X-APP-KEY": API_KEY },
-    cache: "no-store",
+    next: { revalidate },
   });
   if (!res.ok) {
     throw new Error(`LN24 API request failed: ${res.status}`);
   }
   return res.json();
+}
+
+/**
+ * Browser/CDN cache header so repeated requests (e.g. switching category tabs
+ * back and forth) are served instantly instead of round-tripping the API.
+ */
+export function cacheHeaders(maxAge = 300, swr = 600): Record<string, string> {
+  return {
+    "Cache-Control": `public, max-age=${maxAge}, stale-while-revalidate=${swr}`,
+  };
 }
 
 export const decodeHtml = (s: string) =>

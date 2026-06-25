@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { LN24_ENDPOINTS, ln24Fetch } from "@/lib/ln24";
+import { LN24_ENDPOINTS, ln24Fetch, cacheHeaders } from "@/lib/ln24";
 import type { VideoCategory, VideoItem } from "@/lib/types";
 
 export async function GET(
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   const { id } = await ctx.params;
   try {
-    const json = await ln24Fetch(LN24_ENDPOINTS.videos);
+    const json = await ln24Fetch(LN24_ENDPOINTS.videos, 600);
     const groups: VideoCategory[] = json?.data || [];
 
     let found: VideoItem | null = null;
@@ -32,10 +32,13 @@ export async function GET(
       );
     }
 
-    return NextResponse.json({
-      status: true,
-      data: { ...found, categoryName, related },
-    });
+    return NextResponse.json(
+      {
+        status: true,
+        data: { ...found, categoryName, related },
+      },
+      { headers: cacheHeaders(600, 1800) },
+    );
   } catch {
     return NextResponse.json(
       { status: false, message: "Failed to fetch video" },
