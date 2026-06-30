@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import BoldText from "@/components/BoldText";
 import { decodeHtml, htmlToParagraphs } from "@/lib/ln24";
-import { isSaved, toggleSaved } from "@/lib/storage";
 import type { ApiPost } from "@/lib/types";
 
 export default function PostPage() {
@@ -14,57 +13,31 @@ export default function PostPage() {
 
   const [post, setPost] = useState<ApiPost | null>(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- read saved state from storage
-    if (id) setSaved(isSaved(Number(id)));
-  }, [id]);
-
-  const onToggleSave = useCallback(() => {
-    if (!post) return;
-    const next = toggleSaved({
-      post_id: post.post_id,
-      title: decodeHtml(post.title || ""),
-      image: post.image_link || post.image,
-      date: post.date,
-    });
-    setSaved(next);
-  }, [post]);
-
-  const fetchPost = useCallback(
-    async (fromUserRefresh = false) => {
-      if (!id) return;
-      if (!fromUserRefresh) setLoading(true);
-      setErr(null);
-      try {
-        const res = await fetch(`/api/ln24/posts/${id}`);
-        const json = await res.json();
-        if (json?.status && json?.data) {
-          setPost(json.data);
-        } else {
-          throw new Error("Failed to load post");
-        }
-      } catch {
-        setErr("We couldn’t load this post.");
-      } finally {
-        setLoading(false);
-        setRefreshing(false);
+  const fetchPost = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/ln24/posts/${id}`);
+      const json = await res.json();
+      if (json?.status && json?.data) {
+        setPost(json.data);
+      } else {
+        throw new Error("Failed to load post");
       }
-    },
-    [id],
-  );
+    } catch {
+      setErr("We couldn’t load this post.");
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial data fetch
     fetchPost();
-  }, [fetchPost]);
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchPost(true);
   }, [fetchPost]);
 
   const title = decodeHtml(post?.title || "");
@@ -72,17 +45,38 @@ export default function PostPage() {
 
   const sharePost = useCallback(async () => {
     if (!post) return;
-    const link = post.link;
+    const link = post.link || (typeof window !== "undefined" ? window.location.href : "");
     if (!link) return;
+    const canNativeShare =
+      typeof navigator !== "undefined" && typeof navigator.share === "function";
     try {
-      if (navigator.share) {
+      if (canNativeShare) {
         await navigator.share({ title, text: title, url: link });
-      } else {
-        await navigator.clipboard.writeText(link);
+        return;
       }
     } catch {
-      // user cancelled or share unsupported
+      // user cancelled the native share sheet — stop here
+      return;
     }
+    // Fallback: copy the link and show confirmation
+    try {
+      await navigator.clipboard.writeText(link);
+    } catch {
+      const ta = document.createElement("textarea");
+      ta.value = link;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand("copy");
+      } catch {
+        // ignore
+      }
+      document.body.removeChild(ta);
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }, [post, title]);
 
   return (
@@ -98,27 +92,12 @@ export default function PostPage() {
           </svg>
         </button>
 
-        <div className="flex items-center gap-1">
-          {refreshing ? null : (
-            <button
-              onClick={onRefresh}
-              className="h-10 w-10 rounded-full flex items-center justify-center"
-              aria-label="Refresh"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M21 12a9 9 0 11-2.64-6.36M21 4v6h-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
+        <div className="flex items-center gap-2">
+          {copied && (
+            <span className="text-xs font-semibold text-muted">
+              Link copied
+            </span>
           )}
-          <button
-            onClick={onToggleSave}
-            className="h-10 w-10 rounded-full flex items-center justify-center"
-            aria-label={saved ? "Remove from saved" : "Save story"}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill={saved ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
           <button
             onClick={sharePost}
             className="h-10 w-10 rounded-full flex items-center justify-center"

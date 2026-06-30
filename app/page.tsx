@@ -6,7 +6,6 @@ import CategoryTabs from "@/components/CategoryTabs";
 import ArticleCard from "@/components/ArticleCard";
 import { PostsSkeleton } from "@/components/Skeletons";
 import { decodeHtml } from "@/lib/ln24";
-import { fetchJson, peek } from "@/lib/clientCache";
 import { getInterests } from "@/lib/storage";
 import type { Category, PostItem, RawListItem } from "@/lib/types";
 
@@ -27,7 +26,6 @@ function mapPosts(json: ApiList): PostItem[] {
 export default function Home() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeId, setActiveId] = useState<number | null>(null);
-  // Seed posts synchronously from cache so re-selecting a tab is instant.
   const [posts, setPosts] = useState<PostItem[]>([]);
   const [loadingPosts, setLoadingPosts] = useState(true);
 
@@ -36,9 +34,8 @@ export default function Home() {
     let alive = true;
     (async () => {
       try {
-        const json = await fetchJson<{ data?: Category[] }>(
-          "/api/ln24/categories",
-        );
+        const res = await fetch("/api/ln24/categories");
+        const json: { data?: Category[] } = await res.json();
         let cats: Category[] = json?.data || [];
         const interests = getInterests();
         if (interests.length) {
@@ -60,26 +57,18 @@ export default function Home() {
     };
   }, []);
 
-  // Load posts whenever the active category changes.
+  // Load posts whenever the active category changes. Browser HTTP caching
+  // (Cache-Control from the API route) keeps repeat tab views fast, and
+  // failed requests are never cached, so a tab always recovers on the next tap.
   useEffect(() => {
     if (activeId == null) return;
     let alive = true;
-    const url = `/api/ln24/posts?category=${activeId}`;
-
-    /* eslint-disable react-hooks/set-state-in-effect -- paint cached data / show loading */
-    const cached = peek<ApiList>(url);
-    if (cached) {
-      // Instant paint from cache, no skeleton flash.
-      setPosts(mapPosts(cached));
-      setLoadingPosts(false);
-      return;
-    }
-
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- show loading during fetch
     setLoadingPosts(true);
-    /* eslint-enable react-hooks/set-state-in-effect */
     (async () => {
       try {
-        const json = await fetchJson<ApiList>(url);
+        const res = await fetch(`/api/ln24/posts?category=${activeId}`);
+        const json: ApiList = await res.json();
         if (alive) setPosts(mapPosts(json));
       } catch {
         // noop

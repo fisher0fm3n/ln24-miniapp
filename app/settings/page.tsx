@@ -5,8 +5,6 @@ import { useEffect, useState } from "react";
 import SearchBar from "@/components/SearchBar";
 import { clearCache } from "@/lib/storage";
 
-const APP_VERSION = "1.9.11 : 13";
-
 function Row({
   title,
   subtitle,
@@ -63,23 +61,6 @@ export default function SettingsPage() {
       <SearchBar />
 
       <div className="px-4 pt-4">
-        <h2 className="text-sm font-bold tracking-widest text-foreground/70 mb-3">
-          ACCOUNT SETTINGS
-        </h2>
-        <div className="space-y-4">
-          <Row title="Profile" subtitle="guest@ln24.tv" href="/settings" />
-          <Row
-            title="Saved Stories"
-            subtitle="Find your saved articles here"
-            href="/settings/saved"
-          />
-          <Row
-            title="Choose your interests"
-            subtitle="Curate stories that interest you"
-            href="/settings/interests"
-          />
-        </div>
-
         <h2 className="text-sm font-bold tracking-widest text-foreground/70 mt-8 mb-2">
           APP PREFERENCES
         </h2>
@@ -125,7 +106,7 @@ export default function SettingsPage() {
 
         <button
           onClick={onClearCache}
-          className="w-full flex items-center justify-between py-5 border-b border-border text-left"
+          className="w-full flex items-center justify-between py-5 text-left"
         >
           <span className="text-xl font-extrabold text-foreground">
             {cleared ? "Cache cleared" : "Clear cache"}
@@ -134,13 +115,6 @@ export default function SettingsPage() {
             <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
-
-        <div className="flex items-center justify-between py-5">
-          <span className="text-xl font-extrabold text-foreground">
-            App version
-          </span>
-          <span className="text-lg text-muted">{APP_VERSION}</span>
-        </div>
       </div>
     </div>
   );
