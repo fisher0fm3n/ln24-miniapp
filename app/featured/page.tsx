@@ -5,7 +5,7 @@ import SearchBar from "@/components/SearchBar";
 import FeaturedSlider from "@/components/FeaturedSlider";
 import ArticleCard from "@/components/ArticleCard";
 import { FeaturedSkeleton, PostsSkeleton } from "@/components/Skeletons";
-import { decodeHtml } from "@/lib/ln24";
+import { decodeHtml, resolveImageSrc } from "@/lib/ln24";
 import type { FeaturedItem, RawListItem } from "@/lib/types";
 
 export default function FeaturedPage() {
@@ -21,8 +21,8 @@ export default function FeaturedPage() {
         const rows: FeaturedItem[] = (json?.data || []).map((x: RawListItem) => ({
           post_id: x.post_id,
           title: decodeHtml(String(x.title || "")),
-          image: String(x.image || x.image_link || ""),
-          image_link: String(x.image_link || x.image || ""),
+          image: resolveImageSrc(x.image_link, x.image),
+          image_link: resolveImageSrc(x.image_link, x.image),
           excerpt: x.excerpt,
           link: String(x.link || ""),
         }));
@@ -59,7 +59,7 @@ export default function FeaturedPage() {
                 key={item.post_id}
                 post_id={item.post_id}
                 title={item.title}
-                image={item.image_link || item.image}
+                image={item.image}
                 excerpt={item.excerpt}
               />
             ))}

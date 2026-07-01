@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import SearchBar from "@/components/SearchBar";
 import PostRow from "@/components/PostRow";
-import { decodeHtml } from "@/lib/ln24";
+import { decodeHtml, resolveImageSrc } from "@/lib/ln24";
 import type { PostItem, RawListItem } from "@/lib/types";
 
 function SearchResults() {
@@ -26,8 +26,8 @@ function SearchResults() {
       const rows: PostItem[] = (json?.data || []).map((x: RawListItem) => ({
         post_id: x.post_id,
         title: decodeHtml(String(x.title || "")),
-        image: String(x.image_link || x.image || ""),
-        image_link: String(x.image_link || x.image || ""),
+        image: resolveImageSrc(x.image_link, x.image),
+        image_link: resolveImageSrc(x.image_link, x.image),
         link: String(x.link || ""),
         date: String(x.date || ""),
         excerpt: x.excerpt,
@@ -71,7 +71,7 @@ function SearchResults() {
             key={item.post_id}
             post_id={item.post_id}
             title={item.title}
-            image={item.image_link || item.image}
+            image={item.image}
             excerpt={item.excerpt}
             date={item.date}
           />

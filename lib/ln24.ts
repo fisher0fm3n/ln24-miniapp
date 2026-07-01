@@ -47,6 +47,23 @@ export const decodeHtml = (s: string) =>
     .replace(/&quot;/g, '"')
     .replace(/&#038;/g, "&");
 
+const DEFAULT_IMAGE_LINK =
+  "https://res.cloudinary.com/raves-music/image/fetch/w_450/fl_lossy,f_jpg/0";
+
+export function resolveImageSrc(
+  imageLink?: string | null,
+  fallback?: string | null,
+): string {
+  const resolvedLink = (imageLink || "").trim();
+  const resolvedFallback = (fallback || "").trim();
+
+  if (!resolvedLink || resolvedLink === DEFAULT_IMAGE_LINK) {
+    return resolvedFallback;
+  }
+
+  return resolvedLink;
+}
+
 export function htmlToParagraphs(html: string): string[] {
   if (!html) return [];
   let s = html

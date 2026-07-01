@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { resolveImageSrc } from "@/lib/ln24";
 import type { FeaturedItem } from "@/lib/types";
 
 const AUTO_MS = 6000;
@@ -52,7 +53,7 @@ export default function FeaturedSlider({
             className="relative shrink-0 w-[calc(100vw-2rem)] sm:w-[420px] aspect-[16/9.4] rounded-lg overflow-hidden snap-start"
           >
             <Image
-              src={item.image_link || item.image}
+              src={resolveImageSrc(item.image_link, item.image)}
               alt={item.title}
               fill
               className="object-cover"

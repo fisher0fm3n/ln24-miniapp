@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import BoldText from "@/components/BoldText";
-import { decodeHtml, htmlToParagraphs } from "@/lib/ln24";
+import { decodeHtml, htmlToParagraphs, resolveImageSrc } from "@/lib/ln24";
 import type { ApiPost } from "@/lib/types";
 
 export default function PostPage() {
@@ -135,7 +135,7 @@ export default function PostPage() {
           <div className="relative w-full aspect-video bg-black">
             {(post?.image_link || post?.image) && (
               <Image
-                src={post.image_link || post.image}
+                src={resolveImageSrc(post?.image_link, post?.image)}
                 alt={title}
                 fill
                 className="object-cover"

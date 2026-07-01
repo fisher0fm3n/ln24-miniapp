@@ -5,7 +5,7 @@ import SearchBar from "@/components/SearchBar";
 import CategoryTabs from "@/components/CategoryTabs";
 import ArticleCard from "@/components/ArticleCard";
 import { PostsSkeleton } from "@/components/Skeletons";
-import { decodeHtml } from "@/lib/ln24";
+import { decodeHtml, resolveImageSrc } from "@/lib/ln24";
 import { getInterests } from "@/lib/storage";
 import type { Category, PostItem, RawListItem } from "@/lib/types";
 
@@ -15,8 +15,8 @@ function mapPosts(json: ApiList): PostItem[] {
   return (json?.data || []).map((x) => ({
     post_id: x.post_id,
     title: decodeHtml(String(x.title || "")),
-    image: String(x.image_link || x.image || ""),
-    image_link: String(x.image_link || x.image || ""),
+    image: resolveImageSrc(x.image_link, x.image),
+    image_link: resolveImageSrc(x.image_link, x.image),
     link: String(x.link || ""),
     date: String(x.date || ""),
     excerpt: x.excerpt,
@@ -103,7 +103,7 @@ export default function Home() {
               key={item.post_id}
               post_id={item.post_id}
               title={item.title}
-              image={item.image_link || item.image}
+              image={item.image}
               excerpt={item.excerpt}
               date={item.date}
             />
