@@ -115,6 +115,16 @@ export default function SettingsPage() {
             <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
+
+        <h2 className="text-sm font-bold tracking-widest text-foreground/70 mt-8 mb-2">
+          ABOUT
+        </h2>
+
+        <Row
+          title="Privacy Policy"
+          subtitle="How LN24 handles your data"
+          href="/privacy"
+        />
       </div>
     </div>
   );
