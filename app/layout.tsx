@@ -46,7 +46,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <div className="flex-1 pb-24 pt-[4rem]">{children}</div>
+        <div className="flex-1 pb-24">{children}</div>
         <BottomNav />
       </body>
     </html>
