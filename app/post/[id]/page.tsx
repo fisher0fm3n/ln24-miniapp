@@ -147,7 +147,7 @@ export default function PostPage() {
           </div>
 
           <div className="px-4 mt-3.5">
-            <h1 className="text-[22px] leading-7 font-extrabold text-foreground">
+            <h1 className="text-[22px] leading-7 font-extrabold text-foreground break-words">
               {title}
             </h1>
 
@@ -190,7 +190,7 @@ export default function PostPage() {
 
           <div className="px-4 mt-1">
             {paragraphs.map((p, i) => (
-              <p key={i} className="text-[15px] leading-[22px] mb-3">
+              <p key={i} className="text-[15px] leading-[22px] mb-3 break-words">
                 <BoldText text={p} />
               </p>
             ))}

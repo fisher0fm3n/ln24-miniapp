@@ -78,7 +78,9 @@ export function htmlToParagraphs(html: string): string[] {
   return s
     .split(/\n{2,}/)
     .map((x) => x.trim())
-    .filter(Boolean);
+    // drop decorative separator lines (e.g. "________" or "----") that
+    // render as one unbreakable word and blow out the layout
+    .filter((x) => x && !/^[_\-—=*\s]{4,}$/.test(x));
 }
 
 export const pickStream = (
